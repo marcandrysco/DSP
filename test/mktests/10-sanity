@@ -1,0 +1,34 @@
+#!/bin/sh
+
+##
+# Sanity Test
+#   Checks to make sure that we are even able to build something using the
+#   detected compilers
+#.
+
+__sanity_fail="build environment is grinning and holding a spatula, guess not"
+
+echo -n "sanity check... "
+
+echo "int main() { return 0; }" > mktests/tmp.c
+
+if ! test -f mktests/tmp.c ; then
+	echo "$__sanity_fail"
+	return 1
+fi
+
+if [ "%cc" ] ; then
+	if ! $cc mktests/tmp.c -o mktests/tmp.out ; then
+		echo "$__sanity_fail"
+		return 1
+	fi
+
+	if [ ! -f mktests/tmp.out ] ; then
+		echo "$__sanity_fail"
+		return 1
+	fi
+fi
+
+rm -f mktests/tmp*
+
+echo "okay"

@@ -1,0 +1,38 @@
+#!/bin/sh
+
+##
+# Restrict Test
+#   Determines if the 'restrict' keyword is supported in , and C if not,
+#   creates a definition so that keyword 'restrict' may be used. Also, it
+#   checks to see if it is available under the keyword '__restrict'.
+# Definitions
+#   restrict
+#     Creates this definition if the 'restrict' keyword does not exist,
+#     attempting to define it to an alternate, equivalent keyword.
+#.
+
+echo -n "checking for restrict... "
+echo "int main() { void *restrict ptr = (void *)0; return 0; }" > mktests/tmp.c
+test -f mktests/tmp.c || echo error || return 1
+
+$cc mktests/tmp.c -o mktests/tmp.out >> config.log 2>&1
+if [ $? -eq 0 ] ; then
+	echo "#define restrict __restrict" >> "$config"
+	echo yes ; return 0
+fi
+echo no
+
+echo -n "checking for __restrict... "
+echo "int main() { void *__restrict ptr = (void *)0; return 0; }" > mktests/tmp.c
+test -f mktests/tmp.c || echo error || return 1
+
+$cc mktests/tmp.c -o mktests/tmp.out >> config.log 2>&1
+if [ $? -eq 0 ] ; then
+	echo "#define restrict __restrict" >> "$config"
+	echo yes ; return 0
+fi
+
+echo "#define restrict" >> "$config"
+
+echo no
+return 1

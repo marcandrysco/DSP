@@ -1,0 +1,36 @@
+Package	"libdsp"
+Version	"0.1.0"
+
+Target
+	Name	"dsp"
+	Type	"Library"
+
+	CFlags	"`pkg-config --cflags shim`"
+	LDFlags	"`pkg-config --libs shim` -lm"
+
+	If [ "$visibility" ]
+		CFlags	+"-fvisibility=internal"
+	EndIf
+
+	Extra	"src/common.h"
+	Extra	"src/defs.h"
+
+	Source	"src/algo.c"
+	Source	"src/conv.c"
+
+	Extra	"src/filter/defs.h"
+	Extra	"src/filter/rc.h"
+
+	Extra	"src/flow/defs.h"
+	Extra	"src/flow/inc.h"
+	Source	"src/flow/flow.c"
+	Source	"src/flow/node.c"
+
+	Source	"src/reverb/defs.c"
+	Extra	"src/reverb/allpass.h"
+	Extra	"src/reverb/comb.h"
+
+	Source	"src/types/array.c"
+	Source	"src/types/lock.c"
+	Source	"src/types/sync.c"
+EndTarget

@@ -1,0 +1,13 @@
+Package	"dsp-test"
+Version	"0.1.0"
+
+Target
+	Name	"dsp-test"
+	Type	"TestApplication"
+
+	CFlags	"`pkg-config --cflags shim.new` -I../"
+	LDFlags	"`pkg-config --libs shim.new` -Wl,-rpath=../ -L../ -ldsp"
+
+	Extra	"src/common.h"
+	Source	"src/main.c"
+EndTarget
