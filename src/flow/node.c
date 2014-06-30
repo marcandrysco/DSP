@@ -237,7 +237,7 @@ void dsp_node_desync(struct dsp_node_t *node, struct dsp_sync_t *sync)
 		unsigned int i;
 
 		if(node->flow == NULL)
-			throw("Node not yet synchronized.");
+			throw("Node not synchronized.");
 
 		for(i = 0; i < node->incnt; i++) {
 			if(node->sink[i]->source.len[0] != 0)
