@@ -18,6 +18,8 @@ HEADERS = \
 	src/reverb/allpass.h \
 	src/reverb/comb.h \
 	\
+	src/tools/gate.h \
+	\
 	src/types/array.h \
 	src/types/lock.h \
 	src/types/sync.h \
