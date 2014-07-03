@@ -67,13 +67,13 @@ static inline struct dsp_reverb_allpass_lpf_t dsp_reverb_allpass_lpf_new(double 
 
 /**
  * Process an all-pass reverberator.
- *   @ring: The ring buffer.
  *   @x: The input.
+ *   @ring: The ring buffer.
  *   @allpass: The all-pass reverberator.
  *   &returns: The next output.
  */
 
-static inline double dsp_reverb_allpass(struct dsp_ring_t *ring, double x, struct dsp_reverb_allpass_t allpass)
+static inline double dsp_reverb_allpass(double x, struct dsp_ring_t *ring, struct dsp_reverb_allpass_t allpass)
 {
 	double v, y;
 
@@ -93,7 +93,7 @@ static inline double dsp_reverb_allpass(struct dsp_ring_t *ring, double x, struc
  *   &returns: The next output.
  */
 
-static inline double dsp_reverb_allpass_lpf(struct dsp_ring_t *ring, double x, double g, unsigned int d, struct dsp_reverb_allpass_lpf_t allpass)
+static inline double dsp_reverb_allpass_lpf(double x, struct dsp_ring_t *ring, struct dsp_reverb_allpass_lpf_t allpass)
 {
 	double v, y;
 

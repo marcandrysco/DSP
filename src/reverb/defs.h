@@ -57,6 +57,23 @@ static inline void dsp_ring_put(struct dsp_ring_t *ring, double val)
 	ring->idx = dsp_mod(ring->idx + 1, ring->len);
 }
 
+/**
+ * Process a single data point, retrieving the last output and providing the
+ * most recent input.
+ *   @ring: The ring.
+ *   @in: The most recent input.
+ *   &returns: The last value in the ring.
+ */
+
+static inline double dsp_ring_proc(struct dsp_ring_t *ring, double in)
+{
+	double out = dsp_ring_last(ring);
+
+	dsp_ring_put(ring, in);
+
+	return out;
+}
+
 
 /**
  * Process low-pass filter feedback loop.

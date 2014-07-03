@@ -261,13 +261,6 @@ void dsp_flow_attach(struct dsp_source_t *source, struct dsp_sink_t *sink, struc
 	if(sync == NULL) {
 		struct dsp_sync_t sync;
 
-		if(source->node->flow == NULL)
-			throw("Source not synchronized.");
-		else if(sink->node->flow == NULL)
-			throw("Sink not synchronized.");
-		else if(sink->node->flow != source->node->flow)
-			throw("Source and sink not synchronized to same flow.");
-
 		sync = dsp_sync_empty();
 		dsp_flow_attach(source, sink, &sync);
 		dsp_sync_commit(&sync);
@@ -290,13 +283,6 @@ void dsp_flow_detach(struct dsp_source_t *source, struct dsp_sink_t *sink, struc
 {
 	if(sync == NULL) {
 		struct dsp_sync_t sync;
-
-		if(source->node->flow == NULL)
-			throw("Source not synchronized.");
-		else if(sink->node->flow == NULL)
-			throw("Sink not synchronized.");
-		else if(sink->node->flow != source->node->flow)
-			throw("Source and sink not synchronized to same flow.");
 
 		sync = dsp_sync_empty();
 		dsp_flow_detach(source, sink, &sync);

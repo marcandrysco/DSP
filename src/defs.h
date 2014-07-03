@@ -26,7 +26,7 @@ struct dsp_lock_t {
  *   &returns; The modified number.
  */
 
-static inline unsigned int dsp_mod(int n, unsigned int m)
+static inline unsigned int dsp_mod(int n, int m)
 {
 	return ((n % m) + m) % m;
 }
