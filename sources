@@ -17,6 +17,7 @@ Target
 
 	Source	"src/algo.c"
 	Source	"src/conv.c"
+	Source	"src/map.c"
 
 	Extra	"src/filter/defs.h"
 	Extra	"src/filter/rc.h"
@@ -29,6 +30,8 @@ Target
 	Source	"src/reverb/defs.c"
 	Extra	"src/reverb/allpass.h"
 	Extra	"src/reverb/comb.h"
+
+	Source	"src/sched/ring.c"
 
 	Source	"src/types/array.c"
 	Source	"src/types/lock.c"

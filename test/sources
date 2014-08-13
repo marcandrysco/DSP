@@ -10,4 +10,5 @@ Target
 
 	Extra	"src/common.h"
 	Source	"src/main.c"
+	Source	"src/map.c"
 EndTarget

@@ -2,8 +2,10 @@
 
 
 /*
- * local function declarations
+ * test function declarations
  */
+
+bool test_map();
 
 
 /**
@@ -135,6 +137,7 @@ int main(int argc, char *argv[])
 	suc &= test_coprime();
 	suc &= test_array();
 	suc &= test_conv();
+	suc &= test_map();
 
 	return suc ? 0 : 1;
 }

@@ -1,5 +1,5 @@
-#ifndef DB_H
-#define DB_H
+#ifndef CALC_H
+#define CALC_H
 
 /*
  * Start Header Creation: dsp.h

@@ -7,6 +7,7 @@ HEADERS = \
 	src/algo.h \
 	src/calc.h \
 	src/conv.h \
+	src/map.h \
 	src/osc.h \
 	src/shape.h \
 	\
@@ -17,6 +18,8 @@ HEADERS = \
 	\
 	src/reverb/allpass.h \
 	src/reverb/comb.h \
+	\
+	src/sched/ring.h \
 	\
 	src/tools/gate.h \
 	\
