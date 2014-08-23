@@ -94,6 +94,6 @@ static void refresh(struct dsp_sched_ring_t *sched)
 {
 	unsigned int i;
 
-	for(i = 0; i < sched->idx; i++)
+	for(i = 0; i < sched->len; i++)
 		sched->init(dsp_sched_ring_idx(sched, i));
 }
