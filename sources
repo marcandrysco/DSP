@@ -15,6 +15,7 @@ Target
 	Extra	"src/common.h"
 	Extra	"src/defs.h"
 
+	Extra	"src/buf.h"
 	Source	"src/algo.c"
 	Source	"src/conv.c"
 	Source	"src/map.c"
@@ -26,6 +27,9 @@ Target
 	Extra	"src/flow/inc.h"
 	Source	"src/flow/flow.c"
 	Source	"src/flow/node.c"
+	
+	Source	"src/io/play.c"
+	Source	"src/io/rec.c"
 
 	Source	"src/reverb/defs.c"
 	Extra	"src/reverb/allpass.h"

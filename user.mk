@@ -7,6 +7,7 @@ HEADERS = \
 	src/algo.h \
 	src/calc.h \
 	src/conv.h \
+	src/buf.h \
 	src/map.h \
 	src/osc.h \
 	src/shape.h \
@@ -15,6 +16,9 @@ HEADERS = \
 	src/filter/rc.h \
 	\
 	src/flow/flow.h \
+	\
+	src/io/play.h \
+	src/io/rec.h \
 	\
 	src/reverb/allpass.h \
 	src/reverb/comb.h \
