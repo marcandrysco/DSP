@@ -22,6 +22,7 @@ Target
 
 	Extra	"src/filter/defs.h"
 	Extra	"src/filter/rc.h"
+	Source	"src/filter/sparse.c"
 
 	Extra	"src/flow/defs.h"
 	Extra	"src/flow/inc.h"
@@ -31,9 +32,10 @@ Target
 	Source	"src/io/play.c"
 	Source	"src/io/rec.c"
 
-	Source	"src/reverb/defs.c"
 	Extra	"src/reverb/allpass.h"
 	Extra	"src/reverb/comb.h"
+	Extra	"src/reverb/defs.h"
+	Source	"src/reverb/ring.c"
 
 	Source	"src/sched/ring.c"
 

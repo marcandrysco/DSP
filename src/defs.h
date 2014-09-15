@@ -31,6 +31,18 @@ static inline unsigned int dsp_mod(int n, int m)
 	return ((n % m) + m) % m;
 }
 
+
+/**
+ * Point structure.
+ *   @n: The offset.
+ *   @a: The value.
+ */
+
+struct dsp_pt_t {
+	unsigned int n;
+	double a;
+};
+
 /* %~dsp.h% */
 
 /*
