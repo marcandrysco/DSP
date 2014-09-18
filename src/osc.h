@@ -20,7 +20,7 @@ static inline double dsp_osc_step(double freq, unsigned int rate)
 }
 
 /**
- * Incement the time using the step.
+ * Increment the time using the step.
  *   @t: The time.
  *   @step: The step.
  */
@@ -28,6 +28,17 @@ static inline double dsp_osc_step(double freq, unsigned int rate)
 static inline double dsp_osc_inc(double t, double step)
 {
 	return fmod(t + step, 1.0);
+}
+
+/**
+ * Decrement the time using the step.
+ *   @t: The time.
+ *   @step: The step.
+ */
+
+static inline double dsp_osc_dec(double t, double step)
+{
+	return fmod(fmod(t - step, 1.0) + 1.0, 1.0);
 }
 
 /**

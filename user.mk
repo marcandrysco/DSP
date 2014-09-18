@@ -13,6 +13,7 @@ HEADERS = \
 	src/shape.h \
 	\
 	src/filter/butter.h \
+	src/filter/moog.h \
 	src/filter/rc.h \
 	src/filter/sparse.h \
 	\
