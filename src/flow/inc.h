@@ -15,9 +15,12 @@
  *   @nbuf: The nuber of buffers, the buffer length.
  *   @buf: The buffer array.
  *   @lock: The lock.
- *   @sync: The synchronized sources.
+ *   @list: The node list.
+ *   @node: The list of synchronized nodes.
+ *   @len: The node list lengths.
  *   @queue: The queued nodes.
  *   @avail: The available buffers.
+ *   @upsource, upsink: The source and sink update trees.
  */
 
 struct dsp_flow_t {
@@ -26,10 +29,14 @@ struct dsp_flow_t {
 
 	struct dsp_lock_t lock;
 
-	struct dsp_array_t sync;
+	struct avltree_t list;
+	struct dsp_node_t **node[2];
+	unsigned int len[2];
 
 	struct dsp_node_t *queue;
 	struct dsp_flow_buf_t *avail;
+
+	struct avltree_t upsource, upsink;
 };
 
 /**
@@ -74,7 +81,9 @@ struct dsp_node_t {
 /**
  * Sink structure.
  *   @node: The node.
+ *   @list: The list of sources.
  *   @source: The array of sources.
+ *   @lenes: The array lengths.
  *   @cnt: The accumulation count.
  *   @accum: The accumulation buffer.
  */
@@ -82,7 +91,10 @@ struct dsp_node_t {
 struct dsp_sink_t {
 	struct dsp_node_t *node;
 
-	struct dsp_array_t source;
+
+	struct avltree_t list;
+	struct dsp_source_t **source[2];
+	unsigned int len[2];
 
 	unsigned int cnt;
 	struct dsp_flow_buf_t *accum;
@@ -91,14 +103,18 @@ struct dsp_sink_t {
 /**
  * Source structure.
  *   @node: The node.
+ *   @list: The list of sinks.
  *   @sink: The array of sinks.
+ *   @len: The array lengths.
  *   @buf: The associated buffer.
  */
 
 struct dsp_source_t {
 	struct dsp_node_t *node;
 
-	struct dsp_array_t sink;
+	struct avltree_t list;
+	struct dsp_sink_t **sink[2];
+	unsigned int len[2];
 
 	struct dsp_flow_buf_t *buf;
 };

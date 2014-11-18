@@ -183,79 +183,15 @@ void dsp_node_reset(struct dsp_node_t *node)
 	for(i = 0; i < node->outcnt; i++) {
 		source = node->source[i];
 
-		while(source->sink.len[0] > 0)
-			dsp_flow_detach(source, dsp_array_getptr(&source->sink, 0, 0), NULL);
+		while(source->len[0] > 0)
+			dsp_flow_detach(source, source->sink[0][0], NULL);
 	}
 
 	for(i = 0; i < node->incnt; i++) {
 		sink = node->sink[i];
 
-		while(sink->source.len[0] > 0)
-			dsp_flow_detach(dsp_array_getptr(&sink->source, 0, 0), sink, NULL);
-	}
-}
-
-/**
- * Synchronize a node to a flow.
- *   @node: The node.
- *   @flow: The flow.
- *   @sync: The synchronization structure.
- */
-
-_export
-void dsp_node_sync(struct dsp_node_t *node, struct dsp_flow_t *flow, struct dsp_sync_t *sync)
-{
-	if(sync == NULL) {
-		struct dsp_sync_t sync;
-
-		if(node->flow != NULL)
-			throw("Node already synchronized.");
-
-		sync = dsp_sync_empty();
-		dsp_node_sync(node, flow, &sync);
-		dsp_sync_commit(&sync);
-	}
-	else {
-		node->cnt = 0;
-		node->flow = flow;
-
-		dsp_array_addptr(&flow->sync, node, sync);
-	}
-}
-
-/**
- * Desynchronize a node from a flow.
- *   @node: The node.
- *   @sync: The synchronization structure.
- */
-
-_export
-void dsp_node_desync(struct dsp_node_t *node, struct dsp_sync_t *sync)
-{
-	if(sync == NULL) {
-		struct dsp_sync_t sync;
-		unsigned int i;
-
-		if(node->flow == NULL)
-			throw("Node not synchronized.");
-
-		for(i = 0; i < node->incnt; i++) {
-			if(node->sink[i]->source.len[0] != 0)
-				throw("Cannot desync attached node.");
-		}
-
-		for(i = 0; i < node->outcnt; i++) {
-			if(node->source[i]->sink.len[0] != 0)
-				throw("Cannot desync attached node.");
-		}
-
-		sync = dsp_sync_empty();
-		dsp_node_desync(node, &sync);
-		dsp_sync_commit(&sync);
-	}
-	else {
-		dsp_array_remptr(&node->flow->sync, node, sync);
-		node->flow = NULL;
+		while(sink->len[0] > 0)
+			dsp_flow_detach(sink->source[0][0], sink, NULL);
 	}
 }
 
@@ -274,7 +210,9 @@ static struct dsp_sink_t *sink_new(struct dsp_node_t *node)
 	sink->node = node;
 	sink->cnt = 0;
 	sink->accum = 0;
-	sink->source = dsp_array_empty(sizeof(void *));
+	sink->list = avltree_empty(compare_ptr, delete_noop);
+	sink->source[0] = sink->source[1] = NULL;
+	sink->len[0] = sink->len[1] = 0;
 
 	return sink;
 }
@@ -286,7 +224,8 @@ static struct dsp_sink_t *sink_new(struct dsp_node_t *node)
 
 static void sink_delete(struct dsp_sink_t *sink)
 {
-	dsp_array_destroy(&sink->source);
+	avltree_destroy(&sink->list);
+	mem_delete(sink->source[0]);
 	mem_free(sink);
 }
 
@@ -303,7 +242,10 @@ static struct dsp_source_t *source_new(struct dsp_node_t *node)
 
 	source = mem_alloc(sizeof(struct dsp_source_t));
 	source->node = node;
-	source->sink = dsp_array_empty(sizeof(void *));
+	source->node = node;
+	source->list = avltree_empty(compare_ptr, delete_noop);
+	source->sink[0] = source->sink[1] = NULL;
+	source->len[0] = source->len[1] = 0;
 
 	return source;
 }
@@ -315,6 +257,7 @@ static struct dsp_source_t *source_new(struct dsp_node_t *node)
 
 static void source_delete(struct dsp_source_t *source)
 {
-	dsp_array_destroy(&source->sink);
+	avltree_destroy(&source->list);
+	mem_delete(source->sink[0]);
 	mem_free(source);
 }

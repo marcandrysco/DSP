@@ -1,6 +1,7 @@
 #include "../common.h"
 #include "flow.h"
 #include "inc.h"
+#include "node.h"
 
 
 /*
@@ -9,6 +10,7 @@
 
 static void proc_node(struct dsp_node_t *node, unsigned int len, uint8_t sel);
 
+static void flow_commit(void *arg);
 static void flow_realloc(struct dsp_flow_t *flow);
 static void flow_reset(struct dsp_flow_t *flow);
 
@@ -39,7 +41,13 @@ struct dsp_flow_t *dsp_flow_new()
 	flow_reset(flow);
 
 	flow->lock = dsp_lock_gen();
-	flow->sync = dsp_array_empty(sizeof(void *));
+
+	flow->list = avltree_empty(compare_ptr, delete_noop);
+	flow->node[0] = flow->node[1] = NULL;
+	flow->len[0] = flow->len[1] = 0;
+
+	flow->upsource = avltree_empty(compare_ptr, delete_noop);
+	flow->upsink = avltree_empty(compare_ptr, delete_noop);
 
 	return flow;
 }
@@ -52,8 +60,11 @@ struct dsp_flow_t *dsp_flow_new()
 _export
 void dsp_flow_delete(struct dsp_flow_t *flow)
 {
+	avltree_destroy(&flow->upsource);
+	avltree_destroy(&flow->upsink);
+	avltree_destroy(&flow->list);
+	mem_delete(flow->node[0]);
 	dsp_lock_destroy(&flow->lock);
-	dsp_array_destroy(&flow->sync);
 	mem_delete(flow->buf);
 	mem_free(flow);
 }
@@ -144,8 +155,8 @@ void dsp_flow_proc(struct dsp_flow_t *flow, unsigned int len)
 
 	sel = dsp_lock_rdlock(&flow->lock);
 
-	sync = (struct dsp_node_t **)flow->sync.data[sel];
-	cnt = flow->sync.len[sel];
+	sync = flow->node[sel];
+	cnt = flow->len[sel];
 
 	for(i = 0; i < cnt; i++) {
 		struct dsp_node_t *node = sync[i];
@@ -153,7 +164,7 @@ void dsp_flow_proc(struct dsp_flow_t *flow, unsigned int len)
 		for(ii = 0; ii < node->incnt; ii++) {
 			struct dsp_sink_t *sink = node->sink[ii];
 
-			if(sink->source.len[sel] > 0)
+			if(sink->len[sel] > 0)
 				continue;
 
 			bufzero(sink->accum = bufnext(flow), len);
@@ -209,9 +220,9 @@ static void proc_node(struct dsp_node_t *node, unsigned int len, uint8_t sel)
 
 	for(i = 0; i < node->outcnt; i++) {
 		struct dsp_source_t *source = node->source[i];
-		struct dsp_sink_t **list = (struct dsp_sink_t **)source->sink.data[sel];
+		struct dsp_sink_t **list = source->sink[sel];
 		struct dsp_flow_buf_t *avail = source->buf;
-		unsigned int ii, cnt = source->sink.len[sel];
+		unsigned int ii, cnt = source->len[sel];
 
 		for(ii = 0; ii < cnt; ii++) {
 			struct dsp_sink_t *sink = list[ii];
@@ -231,7 +242,7 @@ static void proc_node(struct dsp_node_t *node, unsigned int len, uint8_t sel)
 				bufdel(node->flow, avail);
 
 			sink->cnt++;
-			if(sink->cnt == sink->source.len[sel]) {
+			if(sink->cnt == sink->len[sel]) {
 				struct dsp_node_t *node = sink->node;
 
 				sink->cnt = 0;
@@ -244,6 +255,78 @@ static void proc_node(struct dsp_node_t *node, unsigned int len, uint8_t sel)
 				}
 			}
 		}
+	}
+}
+
+
+/**
+ * Synchronize a node to a flow.
+ *   @flow: The flow.
+ *   @node: The node.
+ *   @sync: The synchronization structure.
+ */
+
+_export
+void dsp_flow_sync(struct dsp_flow_t *flow, struct dsp_node_t *node, struct dsp_sync_t *sync)
+{
+	if(sync == NULL) {
+		struct dsp_sync_t sync;
+
+		if(node->flow != NULL)
+			throw("Node already synchronized.");
+
+		sync = dsp_sync_empty();
+		dsp_flow_sync(flow, node, &sync);
+		dsp_sync_commit(&sync);
+	}
+	else {
+		if(dsp_sync_add(sync, flow, flow_commit))
+			dsp_lock_wrlock(&flow->lock);
+
+		node->cnt = 0;
+		node->flow = flow;
+
+		avltree_insert(&flow->list, node, node);
+	}
+}
+
+/**
+ * Desynchronize a node from a flow.
+ *   @node: The node.
+ *   @flow: The flow.
+ *   @sync: The synchronization structure.
+ */
+
+_export
+void dsp_flow_desync(struct dsp_flow_t *flow, struct dsp_node_t *node, struct dsp_sync_t *sync)
+{
+	if(sync == NULL) {
+		struct dsp_sync_t sync;
+		unsigned int i;
+
+		if(node->flow == NULL)
+			throw("Node not synchronized.");
+
+		for(i = 0; i < node->incnt; i++) {
+			if(node->sink[i]->len[0] != 0)
+				throw("Cannot desync attached node.");
+		}
+
+		for(i = 0; i < node->outcnt; i++) {
+			if(node->source[i]->len[0] != 0)
+				throw("Cannot desync attached node.");
+		}
+
+		sync = dsp_sync_empty();
+		dsp_flow_desync(flow, node, &sync);
+		dsp_sync_commit(&sync);
+	}
+	else {
+		if(dsp_sync_add(sync, flow, flow_commit))
+			dsp_lock_wrlock(&flow->lock);
+
+		avltree_purge(&flow->list, node);
+		node->flow = NULL;
 	}
 }
 
@@ -266,8 +349,21 @@ void dsp_flow_attach(struct dsp_source_t *source, struct dsp_sink_t *sink, struc
 		dsp_sync_commit(&sync);
 	}
 	else {
-		dsp_array_addptr(&source->sink, sink, sync);
-		dsp_array_addptr(&sink->source, source, sync);
+		struct dsp_flow_t *flow = source->node->flow;
+
+		if(flow != NULL) {
+			if(dsp_sync_add(sync, flow, flow_commit))
+				dsp_lock_wrlock(&flow->lock);
+
+			if(!avltree_lookup(&flow->upsource, source))
+				avltree_insert(&flow->upsource, source, source);
+
+			if(!avltree_lookup(&flow->upsink, sink))
+				avltree_insert(&flow->upsink, sink, sink);
+		}
+
+		avltree_insert(&source->list, sink, sink);
+		avltree_insert(&sink->list, source, source);
 	}
 }
 
@@ -289,11 +385,102 @@ void dsp_flow_detach(struct dsp_source_t *source, struct dsp_sink_t *sink, struc
 		dsp_sync_commit(&sync);
 	}
 	else {
-		dsp_array_remptr(&source->sink, sink, sync);
-		dsp_array_remptr(&sink->source, source, sync);
+		struct dsp_flow_t *flow = source->node->flow;
+
+		if(dsp_sync_add(sync, flow, flow_commit))
+			dsp_lock_wrlock(&flow->lock);
+
+		if(!avltree_lookup(&flow->upsource, source))
+			avltree_insert(&flow->upsource, source, source);
+
+		if(!avltree_lookup(&flow->upsink, sink))
+			avltree_insert(&flow->upsink, sink, sink);
+
+		avltree_purge(&source->list, sink);
+		avltree_purge(&sink->list, source);
 	}
 }
 
+
+/**
+ * Commit a flow on the lock.
+ *   @arg: The argument.
+ */
+
+static void flow_commit(void *arg)
+{
+	struct dsp_flow_t *flow = arg;
+	unsigned int i;
+	struct dsp_node_t *node;
+	struct avltree_iter_t iter;
+	struct dsp_source_t *source;
+	struct dsp_sink_t *sink;
+
+	flow->len[0] = flow->list.count;
+	if(flow->len[0] > 0) {
+		flow->node[0] = mem_alloc(sizeof(void *) * flow->len[0]);
+
+		iter = avltree_iter_begin(&flow->list);
+		for(i = 0; (node = avltree_iter_next(&iter)) != NULL; i++)
+			flow->node[0][i] = node;
+	}
+	else
+		flow->node[0] = NULL;
+
+	iter = avltree_iter_begin(&flow->upsource);
+	while((source = avltree_iter_next(&iter)) != NULL) {
+		struct avltree_iter_t iter;
+
+		source->len[0] = source->list.count;
+		if(source->len[0] > 0) {
+			source->sink[0] = mem_alloc(sizeof(void *) * source->len[0]);
+
+			iter = avltree_iter_begin(&source->list);
+			for(i = 0; (sink = avltree_iter_next(&iter)) != NULL; i++)
+				source->sink[0][i] = sink;
+		}
+		else
+			source->sink[0] = NULL;
+	}
+
+	iter = avltree_iter_begin(&flow->upsink);
+	while((sink = avltree_iter_next(&iter)) != NULL) {
+		struct avltree_iter_t iter;
+
+		sink->len[0] = sink->list.count;
+		if(sink->len[0] > 0) {
+			sink->source[0] = mem_alloc(sizeof(void *) * sink->len[0]);
+
+			iter = avltree_iter_begin(&sink->list);
+			for(i = 0; (source = avltree_iter_next(&iter)) != NULL; i++)
+				sink->source[0][i] = source;
+		}
+		else
+			sink->source[0] = NULL;
+	}
+
+	dsp_lock_wrswap(&flow->lock);
+
+	mem_delete(flow->node[1]);
+	flow->len[1] = flow->len[0];
+	flow->node[1] = flow->node[0];
+
+	iter = avltree_iter_begin(&flow->upsource);
+	while((source = avltree_iter_next(&iter)) != NULL) {
+		mem_delete(source->sink[1]);
+		source->len[1] = source->len[0];
+		source->sink[1] = source->sink[0];
+	}
+
+	iter = avltree_iter_begin(&flow->upsink);
+	while((sink = avltree_iter_next(&iter)) != NULL) {
+		mem_delete(sink->source[1]);
+		sink->len[1] = sink->len[0];
+		sink->source[1] = sink->source[0];
+	}
+
+	dsp_lock_wrunlock(&flow->lock);
+}
 
 /**
  * Reallocate teh buffers.

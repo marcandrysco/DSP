@@ -33,9 +33,6 @@ void dsp_node_reset(struct dsp_node_t *node);
 void dsp_node_conf(struct dsp_node_t *node, dsp_flow_f func, void *arg);
 void dsp_node_resize(struct dsp_node_t *node, unsigned int incnt, unsigned int outcnt);
 
-void dsp_node_sync(struct dsp_node_t *node, struct dsp_flow_t *flow, struct dsp_sync_t *sync);
-void dsp_node_desync(struct dsp_node_t *node, struct dsp_sync_t *sync);
-
 /* %~dsp.h% */
 
 /*
