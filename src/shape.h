@@ -29,13 +29,13 @@ struct dsp_adsr_t {
  *   &returns: The ADSR envelope.
  */
 
-static inline struct dsp_adsr_t dsp_adsr_gen(double attack, double decay, double sustain, double release, unsigned int rate)
+static inline struct dsp_adsr_t dsp_adsr_init(double attack, double decay, double sustain, double release, unsigned int rate)
 {
 	struct dsp_adsr_t adsr;
 
 	adsr.attack = rate * attack;
 	adsr.decay = rate * decay + adsr.attack;
-	adsr.release = rate * adsr.release;
+	adsr.release = rate *release;
 	adsr.sustain = sustain;
 
 	return adsr;
@@ -49,21 +49,34 @@ static inline struct dsp_adsr_t dsp_adsr_gen(double attack, double decay, double
  *   &returns: The volume level in decibels.
  */
 
-static inline double dsp_adsr_proc(struct dsp_adsr_t *adsr, unsigned int t, unsigned int sus)
+static inline double dsp_adsr_proc(struct dsp_adsr_t adsr, unsigned int t, unsigned int sus)
 {
-	if(sus < adsr->decay)
-		sus = adsr->decay;
+	if(sus < adsr.decay)
+		sus = adsr.decay;
 
-	if(t < adsr->attack)
-		return -60.0 + (60.0 / adsr->attack) * t;
-	else if(t < adsr->decay)
-		return adsr->sustain / (adsr->decay - adsr->attack) * (t - adsr->attack);
+	if(t < adsr.attack)
+		return -60.0 + (60.0 / adsr.attack) * t;
+	else if(t < adsr.decay)
+		return adsr.sustain / (adsr.decay - adsr.attack) * (t - adsr.attack);
 	else if(t < sus)
-		return adsr->sustain;
-	else if(t < (sus + adsr->release))
-		return adsr->sustain + (-60.0 - adsr->sustain) / adsr->release * (t - sus);
+		return adsr.sustain;
+	else if(t < (sus + adsr.release))
+		return adsr.sustain + (-60.0 - adsr.sustain) / adsr.release * (t - sus);
 	else
-		return 0.0;
+		return -INFINITY;
+}
+
+/**
+ * Check if the ADSR envelope is still active.
+ *   @adsr: The ADSR envelope.
+ *   @t: The time.
+ *   @sus: The sustain length.
+ *   &returns: True if active false otherwise.
+ */
+
+static inline bool dsp_adsr_active(struct dsp_adsr_t adsr, unsigned int t, unsigned int sus)
+{
+	return t < (sus + adsr.release);
 }
 
 

@@ -24,11 +24,11 @@ struct dsp_butter_2 {
  *   &returns: The constant.
  */
 
-static inline struct dsp_butter_2 dsp_butter_2(unsigned int rate, double freq)
+static inline struct dsp_butter_2 dsp_filt_butter2_init(unsigned int rate, double freq)
 {
 	double a, b1, b2, c;
 
-	c = freq / (rate * sqrt(2));
+	c = (2.0 * M_PI * freq) / (rate * sqrt(2));
 	b1 = -2 * exp(-c) * cos(c);
 	b2 = exp(-2 * c);
 	a = 1 + b1 + b2;
@@ -44,7 +44,7 @@ static inline struct dsp_butter_2 dsp_butter_2(unsigned int rate, double freq)
  *   &returns: The output.
  */
 
-static inline double dsp_butter2_low(double x, struct dsp_butter_2 c, struct dsp_data_2 *data)
+static inline double dsp_filt_butter2_low(double x, struct dsp_butter_2 c, struct dsp_data_2 *data)
 {
 	double y;
 
@@ -62,7 +62,7 @@ static inline double dsp_butter2_low(double x, struct dsp_butter_2 c, struct dsp
  *   &returns: The output.
  */
 
-static inline double dsp_butter2_high(double x, struct dsp_butter_2 c, struct dsp_data_2 *data)
+static inline double dsp_filt_butter2_high(double x, struct dsp_butter_2 c, struct dsp_data_2 *data)
 {
 	double y;
 

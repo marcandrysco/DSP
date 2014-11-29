@@ -71,7 +71,18 @@ static inline double dsp_osc_square(double t)
 
 static inline double dsp_osc_saw(double t)
 {
-	return fmod(4.0 * t, 2.0) - 1.0;
+	return fmod(1.0 + 2.0 * t, 2.0) - 1.0;
+}
+
+/**
+ * Generate a reverse sawtooth wave data point.
+ *   @t: The time.
+ *   &returns: The data point.
+ */
+
+static inline double dsp_osc_rsaw(double t)
+{
+	return fmod(3.0 - 2.0 * t, 2.0) - 1.0;
 }
 
 /**

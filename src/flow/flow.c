@@ -351,16 +351,14 @@ void dsp_flow_attach(struct dsp_source_t *source, struct dsp_sink_t *sink, struc
 	else {
 		struct dsp_flow_t *flow = source->node->flow;
 
-		if(flow != NULL) {
-			if(dsp_sync_add(sync, flow, flow_commit))
-				dsp_lock_wrlock(&flow->lock);
+		if(dsp_sync_add(sync, flow, flow_commit))
+			dsp_lock_wrlock(&flow->lock);
 
-			if(!avltree_lookup(&flow->upsource, source))
-				avltree_insert(&flow->upsource, source, source);
+		if(!avltree_lookup(&flow->upsource, source))
+			avltree_insert(&flow->upsource, source, source);
 
-			if(!avltree_lookup(&flow->upsink, sink))
-				avltree_insert(&flow->upsink, sink, sink);
-		}
+		if(!avltree_lookup(&flow->upsink, sink))
+			avltree_insert(&flow->upsink, sink, sink);
 
 		avltree_insert(&source->list, sink, sink);
 		avltree_insert(&sink->list, source, source);

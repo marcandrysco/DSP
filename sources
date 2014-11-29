@@ -37,6 +37,7 @@ Target
 	Extra	"src/reverb/defs.h"
 	Source	"src/reverb/ring.c"
 
+	Source	"src/sched/live.c"
 	Source	"src/sched/ring.c"
 
 	Source	"src/types/array.c"

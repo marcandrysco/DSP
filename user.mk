@@ -15,9 +15,11 @@ HEADERS = \
 	src/filter/butter.h \
 	src/filter/moog.h \
 	src/filter/rc.h \
+	src/filter/res.h \
 	src/filter/sparse.h \
 	\
 	src/flow/flow.h \
+	src/flow/node.h \
 	\
 	src/io/play.h \
 	src/io/rec.h \
@@ -26,6 +28,7 @@ HEADERS = \
 	src/reverb/comb.h \
 	src/reverb/ring.h \
 	\
+	src/sched/live.h \
 	src/sched/ring.h \
 	\
 	src/tools/gate.h \

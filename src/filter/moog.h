@@ -18,7 +18,7 @@ struct dsp_moog_t {
 
 
 /**
- * Calculate the RC constant.
+ * Calculate the filter constant.
  *   @rate: The rate.
  *   @freq: The frequency.
  *   @res: The resanonce constant in the range zero to four.

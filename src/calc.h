@@ -41,6 +41,19 @@ static inline double dsp_clip(double val)
 	return tanh(val);
 }
 
+
+/**
+ * Perform a modulus returning an always positive result.
+ *   @n: The input number.
+ *   @m: The modulus.
+ *   &returns; The modified number.
+ */
+
+static inline unsigned int dsp_fmod(double n, double m)
+{
+	return doubled(fmod(n, m) + m, m);
+}
+
 /* %~dsp.h% */
 
 /*
